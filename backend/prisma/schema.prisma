@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ApplicationStatus {
+  INTERESTED
+  APPLIED
+  ASSESSMENT
+  INTERVIEW
+  OFFER
+  REJECTED
+  WITHDRAWN
+}
+
+enum SalaryPeriod {
+  HOURLY
+  MONTHLY
+  YEARLY
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  applications JobApplication[]
+  sessions     UserSession[]
+
+  @@map("users")
+}
+
+model JobApplication {
+  id                String            @id @default(uuid()) @db.Uuid
+  userId            String            @map("user_id") @db.Uuid
+  companyName       String            @map("company_name")
+  positionTitle     String            @map("position_title")
+  jobPostingUrl     String?           @map("job_posting_url")
+  applicationDate   DateTime?         @map("application_date") @db.Date
+  status            ApplicationStatus
+  salaryMin         Decimal?          @map("salary_min") @db.Decimal(12, 2)
+  salaryMax         Decimal?          @map("salary_max") @db.Decimal(12, 2)
+  salaryCurrency    String?           @map("salary_currency") @db.Char(3)
+  salaryPeriod      SalaryPeriod?     @map("salary_period")
+  location          String?
+  applicationSource String?           @map("application_source")
+  recruiterName     String?           @map("recruiter_name")
+  recruiterEmail    String?           @map("recruiter_email")
+  recruiterPhone    String?           @map("recruiter_phone")
+  notes             String?
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+
+  user          User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  statusHistory ApplicationStatusHistory[]
+
+  @@index([userId])
+  @@index([userId, status])
+  @@index([userId, updatedAt])
+  @@map("job_applications")
+}
+
+model ApplicationStatusHistory {
+  id               String             @id @default(uuid()) @db.Uuid
+  jobApplicationId String             @map("job_application_id") @db.Uuid
+  fromStatus       ApplicationStatus? @map("from_status")
+  toStatus         ApplicationStatus  @map("to_status")
+  changedAt        DateTime           @default(now()) @map("changed_at")
+
+  jobApplication JobApplication @relation(fields: [jobApplicationId], references: [id], onDelete: Cascade)
+
+  @@index([jobApplicationId, changedAt])
+  @@map("application_status_history")
+}
+
+model UserSession {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @map("user_id") @db.Uuid
+  refreshTokenHash String   @map("refresh_token_hash")
+  expiresAt        DateTime @map("expires_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_sessions")
+}
