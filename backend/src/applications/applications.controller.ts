@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -14,6 +15,7 @@ import type { Request } from 'express';
 import { ApplicationsService } from './applications.service.js';
 import { CreateApplicationDto } from '../auth/dto/create-application.dto.js';
 import { UpdateApplicationDto } from '../auth/dto/update-application.dto.js';
+import { ListApplicationsQueryDto } from '../auth/dto/list-applications-query.dto.js';
 
 type AuthenticatedUser = {
   id: string;
@@ -64,9 +66,15 @@ export class ApplicationsController {
     }
   
   @Get()
-  findAll(@Req() request: AuthenticatedRequest) {
-    return this.applicationsService.findAll(request.user.id);
-  }
+    findAll(
+      @Req() request: AuthenticatedRequest,
+      @Query() query: ListApplicationsQueryDto,
+    ) {
+      return this.applicationsService.findAll(
+        request.user.id,
+        query,
+      );
+    }
 
   @Get(':id')
     findOne(
