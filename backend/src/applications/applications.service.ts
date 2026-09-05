@@ -6,6 +6,7 @@ import {
 import { UpdateApplicationDto } from '../auth/dto/update-application.dto.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { CreateApplicationDto } from '../auth/dto/create-application.dto.js';
+import { ListApplicationsQueryDto } from '../auth/dto/list-applications-query.dto.js';
 
 
 @Injectable()
@@ -126,20 +127,72 @@ export class ApplicationsService {
     };
     }
   
-  async findAll(userId: string) {
-    const applications = await this.prisma.jobApplication.findMany({
-        where: {
-        userId,
-        },
-        orderBy: {
-        updatedAt: 'desc',
-        },
-    });
+  async findAll(
+    userId: string,
+    query: ListApplicationsQueryDto,
+  ) {
+    const {
+      page,
+      limit,
+      search,
+      status,
+      sort,
+      order,
+    } = query;
+
+    const skip = (page - 1) * limit;
+
+    const where = {
+      userId,
+
+      ...(status && {
+        status,
+      }),
+
+      ...(search && {
+        OR: [
+          {
+            companyName: {
+              contains: search,
+              mode: 'insensitive' as const,
+            },
+          },
+          {
+            positionTitle: {
+              contains: search,
+              mode: 'insensitive' as const,
+            },
+          },
+        ],
+      }),
+    };
+
+    const [applications, totalItems] =
+      await this.prisma.$transaction([
+        this.prisma.jobApplication.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: {
+            [sort]: order,
+          },
+        }),
+
+        this.prisma.jobApplication.count({
+          where,
+        }),
+      ]);
 
     return {
-        data: applications,
+      data: applications,
+      pagination: {
+        page,
+        limit,
+        totalItems,
+        totalPages: Math.ceil(totalItems / limit),
+      },
     };
-    }
+  }
 
   async create(userId: string, dto: CreateApplicationDto) {
     if (
