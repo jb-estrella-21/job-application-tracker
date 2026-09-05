@@ -5,6 +5,8 @@ import {
   useParams,
 } from 'react-router-dom';
 import { useAuth } from '../features/auth/AuthContext';
+import { StatusBadge } from '../components/StatusBadge';
+import { getStatusLabel } from '../features/applications/status';
 import {
   deleteApplication,
   getApplication,
@@ -81,112 +83,50 @@ export function ApplicationDetailPage() {
   }
 
   if (isLoading) {
-    return <p>Loading application...</p>;
+    return <div className="state-card" role="status">Loading application...</div>;
   }
 
   if (error || !application) {
-    return <p>{error || 'Application not found.'}</p>;
+    return <div className="state-card state-error" role="alert"><h2>Application unavailable</h2><p>{error || 'Application not found.'}</p><Link to="/applications">Back to applications</Link></div>;
   }
 
   return (
-    <main>
-      <Link to="/applications">
-        Back to applications
-      </Link>
+    <main className="page page-narrow">
+      <Link className="back-link" to="/applications">← Back to applications</Link>
+      <header className="detail-header">
+        <div><p className="eyebrow">{application.companyName}</p><h1>{application.positionTitle}</h1><StatusBadge status={application.status} /></div>
+        <div className="header-actions"><Link className="button button-secondary" to={`/applications/${application.id}/edit`}>Edit application</Link><button className="button button-danger" type="button" onClick={() => void handleDelete()} disabled={isDeleting}>{isDeleting ? 'Deleting...' : 'Delete'}</button></div>
+      </header>
 
-      <h1>{application.positionTitle}</h1>
-      <h2>{application.companyName}</h2>
+      <section className="card detail-section"><h2>Job details</h2><div className="detail-grid"><div><span>Location</span><strong>{application.location ?? '—'}</strong></div><div><span>Application date</span><strong>
+        {application.applicationDate ? new Date(application.applicationDate).toLocaleDateString() : '—'}
+      </strong></div><div><span>Source</span><strong>{application.applicationSource ?? '—'}</strong></div><div><span>Job posting</span><strong>{application.jobPostingUrl ? <a href={application.jobPostingUrl} target="_blank" rel="noreferrer">Open posting ↗</a> : '—'}</strong></div></div></section>
 
-      <p>Status: {application.status}</p>
-      <p>Location: {application.location ?? '—'}</p>
+      <section className="card detail-section"><h2>Compensation</h2>
       <p>
-        Application date:{' '}
-        {application.applicationDate
-          ? new Date(
-              application.applicationDate,
-            ).toLocaleDateString()
-          : '—'}
+        {application.salaryMin || application.salaryMax ? <>{application.salaryCurrency ?? ''} {application.salaryMin ?? '?'} – {application.salaryMax ?? '?'} {application.salaryPeriod ?? ''}</> : 'No compensation details provided.'}
       </p>
+      </section>
 
-      {application.jobPostingUrl && (
-        <p>
-          Job posting:{' '}
-          <a
-            href={application.jobPostingUrl}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Open posting
-          </a>
-        </p>
-      )}
+      <section className="card detail-section"><h2>Recruiter</h2><div className="detail-grid"><div><span>Name</span><strong>{application.recruiterName ?? '—'}</strong></div><div><span>Email</span><strong>{application.recruiterEmail ? <a href={`mailto:${application.recruiterEmail}`}>{application.recruiterEmail}</a> : '—'}</strong></div><div><span>Phone</span><strong>{application.recruiterPhone ? <a href={`tel:${application.recruiterPhone}`}>{application.recruiterPhone}</a> : '—'}</strong></div></div></section>
 
-      <p>
-        Source: {application.applicationSource ?? '—'}
-      </p>
+      <section className="card detail-section"><h2>Notes</h2><p className="notes-content">{application.notes ?? 'No notes added.'}</p></section>
 
-      <p>
-        Salary:{' '}
-        {application.salaryMin || application.salaryMax ? (
-          <>
-            {application.salaryCurrency ?? ''}
-            {' '}
-            {application.salaryMin ?? '?'}
-            {' - '}
-            {application.salaryMax ?? '?'}
-            {' '}
-            {application.salaryPeriod ?? ''}
-          </>
-        ) : (
-          '—'
-        )}
-      </p>
-
-      <h2>Recruiter</h2>
-
-      <p>
-        Name: {application.recruiterName ?? '—'}
-      </p>
-
-      <p>
-        Email: {application.recruiterEmail ?? '—'}
-      </p>
-
-      <p>
-        Phone: {application.recruiterPhone ?? '—'}
-      </p>
-
-      <p>Notes: {application.notes ?? '—'}</p>
-
-      <Link to={`/applications/${application.id}/edit`}>
-        Edit application
-      </Link>
-
-      <button
-        type="button"
-        onClick={() => void handleDelete()}
-        disabled={isDeleting}
-      >
-        {isDeleting ? 'Deleting...' : 'Delete application'}
-      </button>
-
-      <h2>Status history</h2>
+      <section className="card detail-section"><h2>Status history</h2>
 
       {history.length === 0 ? (
         <p>No status history.</p>
       ) : (
         <ul>
           {history.map((entry) => (
-            <li key={entry.id}>
-              {entry.fromStatus ?? 'Created'}
-              {' → '}
-              {entry.toStatus}
-              {' — '}
-              {new Date(entry.changedAt).toLocaleString()}
+            <li className="timeline-item" key={entry.id}>
+              <span className="timeline-dot" aria-hidden="true" />
+              <div><strong>{entry.fromStatus ? getStatusLabel(entry.fromStatus) : 'Created'} → {getStatusLabel(entry.toStatus)}</strong><time dateTime={entry.changedAt}>{new Date(entry.changedAt).toLocaleString()}</time></div>
             </li>
           ))}
         </ul>
       )}
+      </section>
     </main>
   );
 }

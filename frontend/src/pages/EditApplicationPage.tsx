@@ -87,26 +87,28 @@ export function EditApplicationPage() {
   }
 
   if (isLoading) {
-    return <p>Loading application...</p>;
+    return <div className="state-card" role="status">Loading application...</div>;
   }
 
   if (error && !hasApplication) {
-    return <p>{error}</p>;
+    return <div className="state-card state-error" role="alert">{error}</div>;
   }
 
   return (
-    <main>
-      <h1>Edit application</h1>
+    <main className="page page-narrow">
+      <header className="page-header"><div><p className="eyebrow">Applications</p><h1>Edit application</h1><p>Update opportunity details and pipeline status.</p></div></header>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="card application-form">
         <ApplicationFields
           form={form}
           onChange={handleFieldChange}
         />
 
-        {error && <p>{error}</p>}
+        {error && <p className="alert alert-error" role="alert">{error}</p>}
 
+        <div className="form-actions">
         <button
+          className="button button-secondary"
           type="button"
           onClick={() => navigate(`/applications/${id}`)}
           disabled={isSubmitting}
@@ -114,9 +116,10 @@ export function EditApplicationPage() {
           Cancel
         </button>
 
-        <button type="submit" disabled={isSubmitting}>
+        <button className="button button-primary" type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Saving...' : 'Save changes'}
         </button>
+        </div>
       </form>
     </main>
   );

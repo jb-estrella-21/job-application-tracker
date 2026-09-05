@@ -10,5 +10,9 @@ export function LoginPage() {
     return <Navigate to="/dashboard" replace />;
   }
 
-  return <LoginForm />;
+  return (
+    <main className="auth-page">
+      <LoginForm />
+    </main>
+  );
 }

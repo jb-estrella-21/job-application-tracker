@@ -20,9 +20,25 @@ export type ApplicationFormState = {
   salaryPeriod: SalaryPeriod | '';
   recruiterName: string;
   recruiterEmail: string;
+  recruiterPhoneCountryCode: string;
   recruiterPhone: string;
   notes: string;
 };
+
+export const CALLING_CODES = [
+  { code: '+63', country: 'Philippines' },
+  { code: '+1', country: 'United States / Canada' },
+  { code: '+44', country: 'United Kingdom' },
+  { code: '+61', country: 'Australia' },
+  { code: '+65', country: 'Singapore' },
+  { code: '+91', country: 'India' },
+  { code: '+81', country: 'Japan' },
+  { code: '+82', country: 'South Korea' },
+  { code: '+62', country: 'Indonesia' },
+  { code: '+60', country: 'Malaysia' },
+  { code: '+66', country: 'Thailand' },
+  { code: '+84', country: 'Vietnam' },
+] as const;
 
 export type ApplicationFormChangeHandler =
   <K extends keyof ApplicationFormState>(
@@ -44,6 +60,7 @@ export const EMPTY_APPLICATION_FORM: ApplicationFormState = {
   salaryPeriod: '',
   recruiterName: '',
   recruiterEmail: '',
+  recruiterPhoneCountryCode: '',
   recruiterPhone: '',
   notes: '',
 };
@@ -51,6 +68,8 @@ export const EMPTY_APPLICATION_FORM: ApplicationFormState = {
 export function applicationToFormState(
   application: JobApplication,
 ): ApplicationFormState {
+  const phone = splitPhoneNumber(application.recruiterPhone);
+
   return {
     companyName: application.companyName,
     positionTitle: application.positionTitle,
@@ -65,7 +84,8 @@ export function applicationToFormState(
     salaryPeriod: application.salaryPeriod ?? '',
     recruiterName: application.recruiterName ?? '',
     recruiterEmail: application.recruiterEmail ?? '',
-    recruiterPhone: application.recruiterPhone ?? '',
+    recruiterPhoneCountryCode: phone.callingCode,
+    recruiterPhone: phone.number,
     notes: application.notes ?? '',
   };
 }
@@ -87,7 +107,7 @@ export function formStateToCreateInput(
     salaryPeriod: form.salaryPeriod || undefined,
     recruiterName: form.recruiterName || undefined,
     recruiterEmail: form.recruiterEmail || undefined,
-    recruiterPhone: form.recruiterPhone || undefined,
+    recruiterPhone: combinePhoneNumber(form) || undefined,
     notes: form.notes || undefined,
   };
 }
@@ -109,7 +129,27 @@ export function formStateToUpdateInput(
     salaryPeriod: form.salaryPeriod || null,
     recruiterName: form.recruiterName || null,
     recruiterEmail: form.recruiterEmail || null,
-    recruiterPhone: form.recruiterPhone || null,
+    recruiterPhone: combinePhoneNumber(form) || null,
     notes: form.notes || null,
   };
+}
+
+function splitPhoneNumber(phone: string | null) {
+  const value = phone ?? '';
+  const match = CALLING_CODES.find(({ code }) => value.startsWith(code));
+
+  return {
+    callingCode: match?.code ?? '',
+    number: match ? value.slice(match.code.length).trimStart() : value,
+  };
+}
+
+function combinePhoneNumber(form: ApplicationFormState) {
+  if (!form.recruiterPhone) {
+    return '';
+  }
+
+  return form.recruiterPhoneCountryCode
+    ? `${form.recruiterPhoneCountryCode} ${form.recruiterPhone}`
+    : form.recruiterPhone;
 }

@@ -35,12 +35,18 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h1>Job Application Tracker</h1>
-      <h2>Sign in</h2>
+    <form onSubmit={handleSubmit} className="auth-card">
+      <div className="auth-brand">
+        <span className="brand-mark" aria-hidden="true">JT</span>
+        <span>Job Tracker</span>
+      </div>
+      <div className="auth-heading">
+        <h1>Welcome back</h1>
+        <p>Sign in to manage your job search.</p>
+      </div>
 
-      <div>
-        <label htmlFor="email">Email</label>
+      <div className="field">
+        <label htmlFor="email">Email address</label>
         <input
           id="email"
           type="email"
@@ -50,7 +56,7 @@ export function LoginForm() {
         />
       </div>
 
-      <div>
+      <div className="field">
         <label htmlFor="password">Password</label>
         <input
           id="password"
@@ -61,9 +67,9 @@ export function LoginForm() {
         />
       </div>
 
-      {error && <p>{error}</p>}
+      {error && <p className="alert alert-error" role="alert">{error}</p>}
 
-      <button type="submit" disabled={isSubmitting}>
+      <button type="submit" className="button button-primary button-full" disabled={isSubmitting}>
         {isSubmitting ? 'Signing in...' : 'Sign in'}
       </button>
     </form>

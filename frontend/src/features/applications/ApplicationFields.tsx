@@ -3,10 +3,12 @@ import {
   type ApplicationStatus,
   type SalaryPeriod,
 } from '../../types/application';
+import { getStatusLabel } from './status';
 import type {
   ApplicationFormChangeHandler,
   ApplicationFormState,
 } from './form';
+import { CALLING_CODES } from './form';
 
 type ApplicationFieldsProps = {
   form: ApplicationFormState;
@@ -18,7 +20,7 @@ export function ApplicationFields({
   onChange,
 }: ApplicationFieldsProps) {
   return (
-    <>
+    <div className="application-fields">
       <div>
         <label htmlFor="companyName">
           Company
@@ -69,7 +71,7 @@ export function ApplicationFields({
               key={statusOption}
               value={statusOption}
             >
-              {statusOption}
+              {getStatusLabel(statusOption)}
             </option>
           ))}
         </select>
@@ -201,7 +203,7 @@ export function ApplicationFields({
         </div>
       </fieldset>
 
-      <fieldset>
+      <fieldset className="recruiter-fields">
         <legend>Recruiter</legend>
 
         <div>
@@ -220,23 +222,52 @@ export function ApplicationFields({
           <input
             id="recruiterEmail"
             type="email"
+            inputMode="email"
+            autoComplete="section-recruiter email"
+            maxLength={254}
+            aria-describedby="recruiterEmailHint"
             value={form.recruiterEmail}
             onChange={(event) =>
               onChange('recruiterEmail', event.target.value)
             }
           />
+          <span className="field-hint" id="recruiterEmailHint">
+            Enter a valid email, for example name@company.com.
+          </span>
         </div>
 
         <div>
           <label htmlFor="recruiterPhone">Phone</label>
-          <input
-            id="recruiterPhone"
-            type="tel"
-            value={form.recruiterPhone}
-            onChange={(event) =>
-              onChange('recruiterPhone', event.target.value)
-            }
-          />
+          <div className="phone-input-group">
+            <select
+              aria-label="Country calling code or local telephone"
+              value={form.recruiterPhoneCountryCode}
+              onChange={(event) => onChange('recruiterPhoneCountryCode', event.target.value)}
+            >
+              <option value="">Local / telephone</option>
+              {CALLING_CODES.map(({ code, country }) => (
+                <option key={code} value={code}>
+                  {country} ({code})
+                </option>
+              ))}
+            </select>
+            <input
+              id="recruiterPhone"
+              type="tel"
+              inputMode="tel"
+              autoComplete="section-recruiter tel"
+              pattern="(?=.*[0-9])[+0-9() .-]{7,25}"
+              maxLength={25}
+              title="Enter 7 to 25 characters using numbers, spaces, or + ( ) . -"
+              aria-describedby="recruiterPhoneHint"
+              placeholder={form.recruiterPhoneCountryCode ? 'Phone number' : 'Local or telephone number'}
+              value={form.recruiterPhone}
+              onChange={(event) => onChange('recruiterPhone', event.target.value)}
+            />
+          </div>
+          <span className="field-hint" id="recruiterPhoneHint">
+            Choose a country code for mobile numbers, or use Local / telephone.
+          </span>
         </div>
       </fieldset>
 
@@ -253,6 +284,6 @@ export function ApplicationFields({
           }
         />
       </div>
-    </>
+    </div>
   );
 }
