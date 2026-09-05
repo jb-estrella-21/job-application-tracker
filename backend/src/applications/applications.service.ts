@@ -81,12 +81,18 @@ export class ApplicationsService {
         throw new NotFoundException('Application not found');
     }
 
-    const salaryMin = dto.salaryMin ?? existingApplication.salaryMin?.toNumber();
-    const salaryMax = dto.salaryMax ?? existingApplication.salaryMax?.toNumber();
+    const salaryMin =
+      dto.salaryMin === undefined
+        ? existingApplication.salaryMin?.toNumber()
+        : dto.salaryMin;
+    const salaryMax =
+      dto.salaryMax === undefined
+        ? existingApplication.salaryMax?.toNumber()
+        : dto.salaryMax;
 
     if (
-        salaryMin !== undefined &&
-        salaryMax !== undefined &&
+        typeof salaryMin === 'number' &&
+        typeof salaryMax === 'number' &&
         salaryMax < salaryMin
     ) {
         throw new BadRequestException(
@@ -103,13 +109,19 @@ export class ApplicationsService {
             companyName: dto.companyName?.trim(),
             positionTitle: dto.positionTitle?.trim(),
             jobPostingUrl: dto.jobPostingUrl,
-            applicationDate: dto.applicationDate
-            ? new Date(dto.applicationDate)
-            : undefined,
+            applicationDate:
+              dto.applicationDate === undefined
+                ? undefined
+                : dto.applicationDate === null
+                  ? null
+                  : new Date(dto.applicationDate),
             status: dto.status,
             salaryMin: dto.salaryMin,
             salaryMax: dto.salaryMax,
-            salaryCurrency: dto.salaryCurrency?.toUpperCase(),
+            salaryCurrency:
+              dto.salaryCurrency === null
+                ? null
+                : dto.salaryCurrency?.toUpperCase(),
             salaryPeriod: dto.salaryPeriod,
             location: dto.location,
             applicationSource: dto.applicationSource,

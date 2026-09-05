@@ -25,11 +25,11 @@ export class UpdateApplicationDto {
 
   @IsOptional()
   @IsUrl()
-  jobPostingUrl?: string;
+  jobPostingUrl?: string | null;
 
   @IsOptional()
   @IsDateString()
-  applicationDate?: string;
+  applicationDate?: string | null;
 
   @IsOptional()
   @IsEnum(ApplicationStatus)
@@ -38,43 +38,43 @@ export class UpdateApplicationDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
-  salaryMin?: number;
+  salaryMin?: number | null;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
-  salaryMax?: number;
+  salaryMax?: number | null;
 
   @IsOptional()
   @IsString()
   @Length(3, 3)
-  salaryCurrency?: string;
+  salaryCurrency?: string | null;
 
   @IsOptional()
   @IsEnum(SalaryPeriod)
-  salaryPeriod?: SalaryPeriod;
+  salaryPeriod?: SalaryPeriod | null;
 
   @IsOptional()
   @IsString()
-  location?: string;
+  location?: string | null;
 
   @IsOptional()
   @IsString()
-  applicationSource?: string;
+  applicationSource?: string | null;
 
   @IsOptional()
   @IsString()
-  recruiterName?: string;
+  recruiterName?: string | null;
 
   @IsOptional()
   @IsEmail()
-  recruiterEmail?: string;
+  recruiterEmail?: string | null;
 
   @IsOptional()
   @IsString()
-  recruiterPhone?: string;
+  recruiterPhone?: string | null;
 
   @IsOptional()
   @IsString()
-  notes?: string;
+  notes?: string | null; 
 }
