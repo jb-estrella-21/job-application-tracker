@@ -60,15 +60,17 @@ export function ApplicationForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="card application-form">
       <ApplicationFields
         form={form}
         onChange={handleFieldChange}
       />
 
-      {error && <p>{error}</p>}
+      {error && <p className="alert alert-error" role="alert">{error}</p>}
 
+      <div className="form-actions">
       <button
+        className="button button-secondary"
         type="button"
         onClick={() => navigate('/applications')}
         disabled={isSubmitting}
@@ -77,6 +79,7 @@ export function ApplicationForm() {
       </button>
 
       <button
+        className="button button-primary"
         type="submit"
         disabled={isSubmitting}
       >
@@ -84,6 +87,7 @@ export function ApplicationForm() {
           ? 'Creating...'
           : 'Create application'}
       </button>
+      </div>
     </form>
   );
 }
