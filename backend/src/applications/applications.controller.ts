@@ -65,7 +65,18 @@ export class ApplicationsController {
     );
     }
   
-  @Get()
+  @Get(':id/history')
+  findHistory(
+    @Req() request: AuthenticatedRequest,
+    @Param('id') id: string,
+  ) {
+    return this.applicationsService.findHistory(
+      request.user.id,
+      id,
+    );
+  }
+  
+    @Get()
     findAll(
       @Req() request: AuthenticatedRequest,
       @Query() query: ListApplicationsQueryDto,

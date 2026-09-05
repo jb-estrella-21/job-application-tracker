@@ -13,6 +13,35 @@ import { ListApplicationsQueryDto } from '../auth/dto/list-applications-query.dt
 export class ApplicationsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async findHistory(userId: string, id: string) {
+    const application = await this.prisma.jobApplication.findFirst({
+      where: {
+        id,
+        userId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!application) {
+      throw new NotFoundException('Application not found');
+    }
+
+    const history = await this.prisma.applicationStatusHistory.findMany({
+      where: {
+        jobApplicationId: id,
+      },
+      orderBy: {
+        changedAt: 'asc',
+      },
+    });
+
+    return {
+      data: history,
+    };
+  }
+  
   async remove(userId: string, id: string) {
     const application = await this.prisma.jobApplication.findFirst({
         where: {
