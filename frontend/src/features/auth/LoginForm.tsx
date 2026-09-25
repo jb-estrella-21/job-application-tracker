@@ -3,9 +3,19 @@ import { ApiError } from '../../lib/api';
 import { login } from './api';
 import { useAuth } from './AuthContext';
 
-export function LoginForm() {
+type LoginFormProps = {
+  initialEmail?: string;
+  successMessage?: string;
+  onCreateAccount: () => void;
+};
+
+export function LoginForm({
+  initialEmail = '',
+  successMessage = '',
+  onCreateAccount,
+}: LoginFormProps) {
   const { login: setAuth } = useAuth();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,6 +60,7 @@ export function LoginForm() {
         <input
           id="email"
           type="email"
+          autoComplete="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
@@ -61,6 +72,7 @@ export function LoginForm() {
         <input
           id="password"
           type="password"
+          autoComplete="current-password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           required
@@ -68,10 +80,18 @@ export function LoginForm() {
       </div>
 
       {error && <p className="alert alert-error" role="alert">{error}</p>}
+      {successMessage && <p className="alert alert-success" role="status">{successMessage}</p>}
 
       <button type="submit" className="button button-primary button-full" disabled={isSubmitting}>
         {isSubmitting ? 'Signing in...' : 'Sign in'}
       </button>
+
+      <p className="auth-switch">
+        Don&apos;t have an account?{' '}
+        <button type="button" className="auth-link" onClick={onCreateAccount} disabled={isSubmitting}>
+          Create account
+        </button>
+      </p>
     </form>
   );
 }
