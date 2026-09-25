@@ -6,6 +6,8 @@ export type SalaryPeriod =
   | 'MONTHLY'
   | 'YEARLY';
 
+export type EmploymentStatus = 'ACTIVE' | 'LEFT' | 'TERMINATED';
+
 export type JobApplication = {
   id: string;
   userId: string;
@@ -24,6 +26,8 @@ export type JobApplication = {
   recruiterEmail: string | null;
   recruiterPhone: string | null;
   notes: string | null;
+  employmentStatus: EmploymentStatus | null;
+  employmentEndedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };

@@ -37,4 +37,32 @@ describe('ApplicationsService status transitions', () => {
     ).rejects.toThrow('only be marked as hired from an offer');
     expect(transaction).not.toHaveBeenCalled();
   });
+
+  it('ends active hired employment without changing the application status', async () => {
+    const updateMany = vi.fn().mockResolvedValue({ count: 1 });
+    const findFirst = vi.fn().mockResolvedValue({
+      id: 'application-1', userId: 'user-1', status: 'HIRED',
+      employmentStatus: 'LEFT', employmentEndedAt: new Date(),
+    });
+    const prisma = { jobApplication: { updateMany, findFirst } } as unknown as PrismaService;
+    const service = new ApplicationsService(prisma);
+
+    const result = await service.updateEmploymentStatus('user-1', 'application-1', {
+      employmentStatus: 'LEFT',
+    });
+
+    expect(updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ userId: 'user-1', status: 'HIRED', employmentStatus: 'ACTIVE' }),
+      data: expect.objectContaining({ employmentStatus: 'LEFT', employmentEndedAt: expect.any(Date) }),
+    }));
+    expect(result.application.status).toBe('HIRED');
+  });
+
+  it('does not disclose another user application when employment update affects no rows', async () => {
+    const prisma = {
+      jobApplication: { updateMany: vi.fn().mockResolvedValue({ count: 0 }), findFirst: vi.fn().mockResolvedValue(null) },
+    } as unknown as PrismaService;
+    const service = new ApplicationsService(prisma);
+    await expect(service.updateEmploymentStatus('user-1', 'other-user-application', { employmentStatus: 'TERMINATED' })).rejects.toThrow('Application not found');
+  });
 });

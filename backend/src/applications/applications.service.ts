@@ -7,6 +7,7 @@ import { UpdateApplicationDto } from '../auth/dto/update-application.dto.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { CreateApplicationDto } from '../auth/dto/create-application.dto.js';
 import { ListApplicationsQueryDto } from '../auth/dto/list-applications-query.dto.js';
+import { UpdateEmploymentStatusDto } from '../auth/dto/update-employment-status.dto.js';
 
 const TERMINAL_APPLICATION_STATUSES = new Set([
   'REJECTED',
@@ -152,6 +153,10 @@ export class ApplicationsService {
             recruiterEmail: dto.recruiterEmail,
             recruiterPhone: dto.recruiterPhone,
             notes: dto.notes,
+            employmentStatus:
+              dto.status === 'HIRED' ? 'ACTIVE' : undefined,
+            employmentEndedAt:
+              dto.status === 'HIRED' ? null : undefined,
         },
         });
 
@@ -173,6 +178,52 @@ export class ApplicationsService {
         };
     });
     }
+
+  async updateEmploymentStatus(
+    userId: string,
+    id: string,
+    dto: UpdateEmploymentStatusDto,
+  ) {
+    if (dto.employmentStatus === 'ACTIVE') {
+      throw new BadRequestException('Employment can only end as left or terminated');
+    }
+
+    const update = await this.prisma.jobApplication.updateMany({
+      where: {
+        id,
+        userId,
+        status: 'HIRED',
+        employmentStatus: 'ACTIVE',
+      },
+      data: {
+        employmentStatus: dto.employmentStatus,
+        employmentEndedAt: new Date(),
+      },
+    });
+
+    if (update.count === 0) {
+      const application = await this.prisma.jobApplication.findFirst({
+        where: { id, userId },
+        select: { status: true, employmentStatus: true },
+      });
+
+      if (!application) {
+        throw new NotFoundException('Application not found');
+      }
+
+      throw new BadRequestException('Employment status can only change from active employment');
+    }
+
+    const application = await this.prisma.jobApplication.findFirst({
+      where: { id, userId },
+    });
+
+    if (!application) {
+      throw new NotFoundException('Application not found');
+    }
+
+    return { application };
+  }
   
   async findOne(userId: string, id: string) {
     const application = await this.prisma.jobApplication.findFirst({

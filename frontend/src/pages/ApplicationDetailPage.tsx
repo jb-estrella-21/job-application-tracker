@@ -7,6 +7,7 @@ import {
 import { useAuth } from '../features/auth/AuthContext';
 import { StatusBadge } from '../components/StatusBadge';
 import { TerminalStatusDialog } from '../components/TerminalStatusDialog';
+import { EmploymentStatusDialog } from '../components/EmploymentStatusDialog';
 import {
   getAvailableStatusOptions,
   getStatusLabel,
@@ -17,12 +18,14 @@ import {
   getApplication,
   getApplicationHistory,
   updateApplication,
+  updateEmploymentStatus,
 } from '../features/applications/api';
 
 import type {
   ApplicationStatus,
   ApplicationHistoryEntry,
   JobApplication,
+  EmploymentStatus,
 } from '../types/application';
 
 export function ApplicationDetailPage() {
@@ -42,6 +45,9 @@ export function ApplicationDetailPage() {
   const [statusError, setStatusError] = useState('');
   const [pendingTerminalStatus, setPendingTerminalStatus] =
     useState<Extract<ApplicationStatus, 'HIRED' | 'REJECTED' | 'WITHDRAWN'> | null>(null);
+  const [pendingEmploymentStatus, setPendingEmploymentStatus] = useState<Exclude<EmploymentStatus, 'ACTIVE'> | null>(null);
+  const [isUpdatingEmployment, setIsUpdatingEmployment] = useState(false);
+  const [employmentError, setEmploymentError] = useState('');
 
   useEffect(() => {
     if (!accessToken || !id) {
@@ -159,6 +165,16 @@ export function ApplicationDetailPage() {
     setSelectedStatus(application?.status ?? 'INTERESTED');
   }
 
+  async function confirmEmploymentStatus() {
+    if (!accessToken || !id || !pendingEmploymentStatus) return;
+    setEmploymentError(''); setIsUpdatingEmployment(true);
+    try {
+      const updated = await updateEmploymentStatus(accessToken, id, pendingEmploymentStatus);
+      setApplication(updated); setPendingEmploymentStatus(null);
+    } catch { setEmploymentError('Unable to update employment status.'); }
+    finally { setIsUpdatingEmployment(false); }
+  }
+
   if (isLoading) {
     return <div className="state-card" role="status">Loading application...</div>;
   }
@@ -228,6 +244,8 @@ export function ApplicationDetailPage() {
 
       <section className="card detail-section"><h2>Recruiter</h2><div className="detail-grid"><div><span>Name</span><strong>{application.recruiterName ?? '—'}</strong></div><div><span>Email</span><strong>{application.recruiterEmail ? <a href={`mailto:${application.recruiterEmail}`}>{application.recruiterEmail}</a> : '—'}</strong></div><div><span>Phone</span><strong>{application.recruiterPhone ? <a href={`tel:${application.recruiterPhone}`}>{application.recruiterPhone}</a> : '—'}</strong></div></div></section>
 
+      {application.status === 'HIRED' && application.employmentStatus && <section className="card detail-section"><h2>Employment</h2><div className="detail-grid"><div><span>Employment status</span><strong>{application.employmentStatus === 'ACTIVE' ? 'Active' : application.employmentStatus === 'LEFT' ? 'Left' : 'Terminated'}</strong></div>{application.employmentEndedAt && <div><span>Employment ended</span><strong>{new Date(application.employmentEndedAt).toLocaleDateString()}</strong></div>}</div>{application.employmentStatus === 'ACTIVE' && <div className="form-actions"><button className="button button-warning" type="button" onClick={() => setPendingEmploymentStatus('LEFT')}>I left this job</button><button className="button button-danger" type="button" onClick={() => setPendingEmploymentStatus('TERMINATED')}>Employment terminated</button></div>}</section>}
+
       <section className="card detail-section"><h2>Notes</h2><p className="notes-content">{application.notes ?? 'No notes added.'}</p></section>
 
       <section className="card detail-section"><h2>Status history</h2>
@@ -254,6 +272,7 @@ export function ApplicationDetailPage() {
           onConfirm={() => void updateStatus(pendingTerminalStatus, true)}
         />
       )}
+      {pendingEmploymentStatus && <EmploymentStatusDialog status={pendingEmploymentStatus} isSubmitting={isUpdatingEmployment} error={employmentError} onCancel={() => { setPendingEmploymentStatus(null); setEmploymentError(''); }} onConfirm={() => void confirmEmploymentStatus()} />}
     </main>
   );
 }

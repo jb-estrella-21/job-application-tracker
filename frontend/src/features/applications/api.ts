@@ -7,6 +7,7 @@ import type {
   ApplicationsResponse,
   CreateApplicationInput,
   UpdateApplicationInput,
+  EmploymentStatus,
 } from '../../types/application';
 
 export function deleteApplication(
@@ -20,6 +21,20 @@ export function deleteApplication(
     },
     accessToken,
   );
+}
+
+export async function updateEmploymentStatus(
+  accessToken: string,
+  id: string,
+  employmentStatus: Exclude<EmploymentStatus, 'ACTIVE'>,
+) {
+  const response = await apiRequest<ApplicationResponse>(
+    `/applications/${id}/employment-status`,
+    { method: 'PATCH', body: JSON.stringify({ employmentStatus }) },
+    accessToken,
+  );
+
+  return response.application;
 }
 
 export async function getApplication(
