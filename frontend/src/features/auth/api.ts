@@ -6,11 +6,21 @@ type LoginCredentials = {
   password: string;
 };
 
+type RegistrationCredentials = LoginCredentials;
+
 export function login(credentials: LoginCredentials) {
   return apiRequest<LoginResponse>('/auth/login', {
     method: 'POST',
     body: JSON.stringify(credentials),
     credentials: 'include',
+    skipAuthRecovery: true,
+  });
+}
+
+export function register(credentials: RegistrationCredentials) {
+  return apiRequest<{ user: User }>('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(credentials),
     skipAuthRecovery: true,
   });
 }
