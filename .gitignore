@@ -10,6 +10,14 @@ build/
 .env.*
 !.env.example
 
+# Manual authentication diagnostic artifacts (may contain credentials).
+/backend/before-refresh.txt
+/backend/cookies.txt
+/backend/login-headers.txt
+/backend/login.json
+/backend/refresh-headers.txt
+/backend/refresh.json
+
 # Logs
 *.log
 npm-debug.log*
