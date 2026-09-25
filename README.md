@@ -219,7 +219,7 @@ npm test
 
 `npm run test:e2e` is reserved for future database-backed tests. It fails closed unless `NODE_ENV=test`, `DATABASE_URL`, and `TEST_DATABASE_URL` are explicitly supplied, both URLs match, and the database name clearly identifies a test database. Never point either variable at a development or production database.
 
-The frontend has no test runner yet. Its session lifecycle remains manually verified: startup refresh followed by `/auth/me`, protected-route checking, memory-only access tokens, one shared 401 refresh/retry, logout cleanup, stale-refresh suppression, and non-401/403 non-refresh behavior. A future focused setup can use Vitest, jsdom, and React Testing Library after separate approval.
+Frontend tests use Vitest, jsdom, and Testing Library with mocked backend contracts. They cover login, registration validation/submission, protected-route state, and API refresh/retry behavior without a running backend or database. Run them with `cd frontend && npm test`, or use `npm run test:watch` during development. Browser smoke checks still cover full cookie/session behavior, including startup restoration, logout, and cross-tab behavior.
 
 No CI workflow is configured. A future CI workflow should run Prisma validation, backend build/lint/test, and frontend build/lint; database-backed tests should run only with an isolated provisioned test database.
 
