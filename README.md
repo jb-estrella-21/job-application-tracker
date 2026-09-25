@@ -138,7 +138,7 @@ The backend reads its browser-origin allowlist from `CORS_ORIGINS`. Local develo
 
 ## Create the first user
 
-The frontend currently provides a login screen but no registration screen. Register a local user through the API:
+The frontend provides Sign In and Create Account modes. You can also register a local user through the API:
 
 ```bash
 curl -X POST http://localhost:3000/api/auth/register \
@@ -156,7 +156,7 @@ Login returns an `accessToken`, which the frontend keeps in React state and send
 Authorization: Bearer <accessToken>
 ```
 
-Authentication is intentionally memory-only. Refreshing the browser clears the token and returns the user to the login page. Persistent sessions and refresh-token handling are outside the current implementation.
+Authentication is intentionally memory-only in the frontend. On reload, the browser sends the HttpOnly refresh cookie to restore a new access token and fetch the current user. Signing out revokes the current refresh session and clears local authentication state.
 
 ## Application form data flow
 
@@ -222,6 +222,46 @@ npm test
 Frontend tests use Vitest, jsdom, and Testing Library with mocked backend contracts. They cover login, registration validation/submission, protected-route state, and API refresh/retry behavior without a running backend or database. Run them with `cd frontend && npm test`, or use `npm run test:watch` during development. Browser smoke checks still cover full cookie/session behavior, including startup restoration, logout, and cross-tab behavior.
 
 No CI workflow is configured. A future CI workflow should run Prisma validation, backend build/lint/test, and frontend build/lint; database-backed tests should run only with an isolated provisioned test database.
+
+## Production deployment requirements
+
+Use Node.js 22.22.2 (or the compatible Node 22 range declared in each package manifest) and deterministic `npm ci` installs.
+
+Backend production build:
+
+```bash
+cd backend
+npm ci
+npx prisma validate
+npx prisma generate
+npm run build
+```
+
+Production uses two secret PostgreSQL URLs: `DATABASE_URL` is the pooled Neon URL used only by the running backend, while `DIRECT_URL` is the direct Neon URL used only by controlled Prisma CLI operations. Do not expose either URL to the frontend, Vite variables, Git, screenshots, or Vercel routing configuration. When a separate, empty production PostgreSQL database has been provisioned, run reviewed migrations from a controlled environment with `DIRECT_URL` set:
+
+```bash
+npx prisma migrate deploy
+```
+
+Never use `prisma migrate dev`, `prisma migrate reset`, or `prisma db push` in production. Do not run migrations from a Vercel function startup or request path. Production starts with `npm run start:prod` and exposes `GET /api/health` for process liveness only.
+
+Frontend production build:
+
+```bash
+cd frontend
+npm ci
+npm run build
+```
+
+Production is deployed as one Vercel Services project: the Vite frontend is the browser-facing service and `/api/*` routes internally to the NestJS service on the same `*.vercel.app` origin. The root `vercel.json` keeps `/api/*` ahead of the frontend catch-all, while the frontend service rewrites client-side routes to `index.html`.
+
+Set the frontend Production build variable to `VITE_API_URL=/api`. Set the backend Production `CORS_ORIGINS` to the exact generated frontend origin, for example `https://your-project.vercel.app`; this preserves the refresh/logout Origin allowlist even though browser API calls are same-origin. Production requires HTTPS and `REFRESH_COOKIE_SECURE=true`. Keep the refresh cookie host-only, `HttpOnly`, `Secure`, `SameSite=Lax`, and scoped to `/api/auth`; do not set `SameSite=None` or a cookie `Domain`.
+
+Vercel project environment variables are shared at the project level. Add backend secrets only as non-`VITE_` variables (`DATABASE_URL`, `JWT_SECRET`, JWT policy settings, `CORS_ORIGINS`, and refresh-cookie settings); Vite only embeds `VITE_*` variables in the browser bundle. `DIRECT_URL` is not needed by the deployed application and must remain in the controlled migration environment only.
+
+Do not copy local development users, sessions, credentials, or database data to production. Users should register normally. Proxy trust remains intentionally disabled until the selected backend/proxy topology is reviewed. The in-memory rate limiter is appropriate only for one backend instance; counters reset on restart and are not shared across instances.
+
+Nest/Helmet provides API security headers. Frontend CSP belongs at the static frontend host, and HSTS belongs at the final HTTPS/TLS termination boundary.
 
 ### Backend
 
