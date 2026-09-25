@@ -16,6 +16,7 @@ import { ApplicationsService } from './applications.service.js';
 import { CreateApplicationDto } from '../auth/dto/create-application.dto.js';
 import { UpdateApplicationDto } from '../auth/dto/update-application.dto.js';
 import { ListApplicationsQueryDto } from '../auth/dto/list-applications-query.dto.js';
+import { UpdateEmploymentStatusDto } from '../auth/dto/update-employment-status.dto.js';
 
 type AuthenticatedUser = {
   id: string;
@@ -64,6 +65,19 @@ export class ApplicationsController {
         dto,
     );
     }
+
+  @Patch(':id/employment-status')
+  updateEmploymentStatus(
+    @Req() request: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body() dto: UpdateEmploymentStatusDto,
+  ) {
+    return this.applicationsService.updateEmploymentStatus(
+      request.user.id,
+      id,
+      dto,
+    );
+  }
   
   @Get(':id/history')
   findHistory(
