@@ -4,7 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { ApiError } from '../../lib/api';
 import { useAuth } from '../auth/AuthContext';
 import { ApplicationFields } from './ApplicationFields';
+import { TerminalStatusDialog } from '../../components/TerminalStatusDialog';
 import { createApplication } from './api';
+import {
+  getAvailableStatusOptions,
+  isTerminalStatus,
+} from './status';
 import type {
   ApplicationFormChangeHandler,
 } from './form';
@@ -20,6 +25,8 @@ export function ApplicationForm() {
   const [form, setForm] = useState(EMPTY_APPLICATION_FORM);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingTerminalStatus, setPendingTerminalStatus] =
+    useState<Extract<typeof form.status, 'HIRED' | 'REJECTED' | 'WITHDRAWN'> | null>(null);
 
   const handleFieldChange: ApplicationFormChangeHandler = (
     field,
@@ -31,9 +38,7 @@ export function ApplicationForm() {
     }));
   };
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
+  async function submitApplication() {
     if (!accessToken) {
       return;
     }
@@ -47,6 +52,7 @@ export function ApplicationForm() {
         formStateToCreateInput(form),
       );
 
+      setPendingTerminalStatus(null);
       navigate('/applications');
     } catch (error) {
       if (error instanceof ApiError && error.status === 400) {
@@ -59,11 +65,29 @@ export function ApplicationForm() {
     }
   }
 
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (isTerminalStatus(form.status)) {
+      setError('');
+      setPendingTerminalStatus(form.status);
+      return;
+    }
+
+    void submitApplication();
+  }
+
+  function handleCancelTerminalStatus() {
+    setPendingTerminalStatus(null);
+    setError('');
+  }
+
   return (
     <form onSubmit={handleSubmit} className="card application-form">
       <ApplicationFields
         form={form}
         onChange={handleFieldChange}
+        statusOptions={getAvailableStatusOptions()}
       />
 
       {error && <p className="alert alert-error" role="alert">{error}</p>}
@@ -88,6 +112,15 @@ export function ApplicationForm() {
           : 'Create application'}
       </button>
       </div>
+      {pendingTerminalStatus && (
+        <TerminalStatusDialog
+          status={pendingTerminalStatus}
+          isSubmitting={isSubmitting}
+          error={error}
+          onCancel={handleCancelTerminalStatus}
+          onConfirm={() => void submitApplication()}
+        />
+      )}
     </form>
   );
 }

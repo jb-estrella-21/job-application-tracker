@@ -12,6 +12,7 @@ enum ApplicationStatus {
   ASSESSMENT
   INTERVIEW
   OFFER
+  HIRED
   REJECTED
   WITHDRAWN
 }

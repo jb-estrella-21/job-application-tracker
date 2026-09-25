@@ -1,9 +1,8 @@
 import {
-  APPLICATION_STATUSES,
   type ApplicationStatus,
   type SalaryPeriod,
 } from '../../types/application';
-import { getStatusLabel } from './status';
+import { getAvailableStatusOptions, getStatusLabel } from './status';
 import type {
   ApplicationFormChangeHandler,
   ApplicationFormState,
@@ -13,11 +12,15 @@ import { CALLING_CODES } from './form';
 type ApplicationFieldsProps = {
   form: ApplicationFormState;
   onChange: ApplicationFormChangeHandler;
+  statusOptions?: readonly ApplicationStatus[];
+  isStatusDisabled?: boolean;
 };
 
 export function ApplicationFields({
   form,
   onChange,
+  statusOptions = getAvailableStatusOptions(),
+  isStatusDisabled = false,
 }: ApplicationFieldsProps) {
   return (
     <div className="application-fields">
@@ -51,30 +54,38 @@ export function ApplicationFields({
         />
       </div>
 
-      <div>
+      <div className="status-field">
         <label htmlFor="status">
           Status
         </label>
 
-        <select
-          id="status"
-          value={form.status}
-          onChange={(event) =>
-            onChange(
-              'status',
-              event.target.value as ApplicationStatus,
-            )
-          }
-        >
-          {APPLICATION_STATUSES.map((statusOption) => (
-            <option
-              key={statusOption}
-              value={statusOption}
-            >
-              {getStatusLabel(statusOption)}
-            </option>
-          ))}
-        </select>
+        <div className="status-input-wrap">
+          <select
+            id="status"
+            value={form.status}
+            onChange={(event) =>
+              onChange(
+                'status',
+                event.target.value as ApplicationStatus,
+              )
+            }
+            disabled={isStatusDisabled}
+          >
+            {statusOptions.map((statusOption) => (
+              <option
+                key={statusOption}
+                value={statusOption}
+              >
+                {getStatusLabel(statusOption)}
+              </option>
+            ))}
+          </select>
+          {isStatusDisabled && (
+            <span className="status-input-lock" role="img" aria-label="Final status locked" title="Final status locked">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3M6 10h12v10H6z" /></svg>
+            </span>
+          )}
+        </div>
       </div>
 
       <div>
