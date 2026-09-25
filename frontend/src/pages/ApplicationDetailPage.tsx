@@ -6,14 +6,21 @@ import {
 } from 'react-router-dom';
 import { useAuth } from '../features/auth/AuthContext';
 import { StatusBadge } from '../components/StatusBadge';
-import { getStatusLabel } from '../features/applications/status';
+import { TerminalStatusDialog } from '../components/TerminalStatusDialog';
+import {
+  getAvailableStatusOptions,
+  getStatusLabel,
+  isTerminalStatus,
+} from '../features/applications/status';
 import {
   deleteApplication,
   getApplication,
   getApplicationHistory,
+  updateApplication,
 } from '../features/applications/api';
 
 import type {
+  ApplicationStatus,
   ApplicationHistoryEntry,
   JobApplication,
 } from '../types/application';
@@ -29,6 +36,12 @@ export function ApplicationDetailPage() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedStatus, setSelectedStatus] =
+    useState<ApplicationStatus>('INTERESTED');
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [statusError, setStatusError] = useState('');
+  const [pendingTerminalStatus, setPendingTerminalStatus] =
+    useState<Extract<ApplicationStatus, 'HIRED' | 'REJECTED' | 'WITHDRAWN'> | null>(null);
 
   useEffect(() => {
     if (!accessToken || !id) {
@@ -47,6 +60,7 @@ export function ApplicationDetailPage() {
 
         setApplication(applicationData);
         setHistory(historyData.data);
+        setSelectedStatus(applicationData.status);
       } catch {
         setError('Unable to load application.');
       } finally {
@@ -82,6 +96,69 @@ export function ApplicationDetailPage() {
     }
   }
 
+  async function updateStatus(
+    status: ApplicationStatus,
+    closeDialogOnSuccess = false,
+  ) {
+    if (
+      !accessToken ||
+      !id ||
+      !application ||
+      status === application.status
+    ) {
+      return;
+    }
+
+    setStatusError('');
+    setIsUpdatingStatus(true);
+
+    try {
+      const updatedApplication = await updateApplication(
+        accessToken,
+        id,
+        { status },
+      );
+
+      setApplication(updatedApplication);
+      setSelectedStatus(updatedApplication.status);
+      if (closeDialogOnSuccess) {
+        setPendingTerminalStatus(null);
+      }
+
+      try {
+        const historyData = await getApplicationHistory(accessToken, id);
+        setHistory(historyData.data);
+      } catch {
+        // The status update succeeded; history will refresh on the next visit.
+      }
+    } catch {
+      setStatusError('Unable to update application status.');
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  }
+
+  function handleStatusChange() {
+    if (!application || selectedStatus === application.status) {
+      return;
+    }
+
+    setStatusError('');
+
+    if (isTerminalStatus(selectedStatus)) {
+      setPendingTerminalStatus(selectedStatus);
+      return;
+    }
+
+    void updateStatus(selectedStatus);
+  }
+
+  function handleCancelTerminalStatus() {
+    setPendingTerminalStatus(null);
+    setStatusError('');
+    setSelectedStatus(application?.status ?? 'INTERESTED');
+  }
+
   if (isLoading) {
     return <div className="state-card" role="status">Loading application...</div>;
   }
@@ -94,8 +171,49 @@ export function ApplicationDetailPage() {
     <main className="page page-narrow">
       <Link className="back-link" to="/applications">← Back to applications</Link>
       <header className="detail-header">
-        <div><p className="eyebrow">{application.companyName}</p><h1>{application.positionTitle}</h1><StatusBadge status={application.status} /></div>
-        <div className="header-actions"><Link className="button button-secondary" to={`/applications/${application.id}/edit`}>Edit application</Link><button className="button button-danger" type="button" onClick={() => void handleDelete()} disabled={isDeleting}>{isDeleting ? 'Deleting...' : 'Delete'}</button></div>
+        <div><p className="eyebrow">{application.companyName}</p><h1>{application.positionTitle}</h1><div className="application-status-display"><StatusBadge status={application.status} />{isTerminalStatus(application.status) && <span className="status-lock-indicator" role="img" aria-label="Final status locked" title="Final status locked"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3M6 10h12v10H6z" /></svg></span>}</div></div>
+        <div className="header-actions application-actions">
+          {!isTerminalStatus(application.status) && <div className="status-change-control">
+            <label className="sr-only" htmlFor="application-status">
+              Change application status
+            </label>
+            <select
+              id="application-status"
+              value={selectedStatus}
+              onChange={(event) =>
+                setSelectedStatus(
+                  event.target.value as ApplicationStatus,
+                )
+              }
+              disabled={isUpdatingStatus || isDeleting}
+            >
+              {getAvailableStatusOptions(application.status).map((status) => (
+                <option key={status} value={status}>
+                  {getStatusLabel(status)}
+                </option>
+              ))}
+            </select>
+            <button
+              className="button button-primary"
+              type="button"
+              onClick={() => void handleStatusChange()}
+              disabled={
+                isUpdatingStatus ||
+                isDeleting ||
+                selectedStatus === application.status
+              }
+            >
+              {isUpdatingStatus ? 'Updating...' : 'Change status'}
+            </button>
+          </div>}
+          <Link className="button button-secondary" to={`/applications/${application.id}/edit`}>
+            Edit application
+          </Link>
+          <button className="button button-danger" type="button" onClick={() => void handleDelete()} disabled={isDeleting || isUpdatingStatus}>
+            {isDeleting ? 'Deleting...' : 'Delete'}
+          </button>
+          {statusError && <p className="status-change-error" role="alert">{statusError}</p>}
+        </div>
       </header>
 
       <section className="card detail-section"><h2>Job details</h2><div className="detail-grid"><div><span>Location</span><strong>{application.location ?? '—'}</strong></div><div><span>Application date</span><strong>
@@ -127,6 +245,15 @@ export function ApplicationDetailPage() {
         </ul>
       )}
       </section>
+      {pendingTerminalStatus && (
+        <TerminalStatusDialog
+          status={pendingTerminalStatus}
+          isSubmitting={isUpdatingStatus}
+          error={statusError}
+          onCancel={handleCancelTerminalStatus}
+          onConfirm={() => void updateStatus(pendingTerminalStatus, true)}
+        />
+      )}
     </main>
   );
 }

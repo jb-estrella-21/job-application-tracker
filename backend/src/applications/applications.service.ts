@@ -8,6 +8,11 @@ import { PrismaService } from '../database/prisma.service.js';
 import { CreateApplicationDto } from '../auth/dto/create-application.dto.js';
 import { ListApplicationsQueryDto } from '../auth/dto/list-applications-query.dto.js';
 
+const TERMINAL_APPLICATION_STATUSES = new Set([
+  'REJECTED',
+  'WITHDRAWN',
+  'HIRED',
+]);
 
 @Injectable()
 export class ApplicationsService {
@@ -79,6 +84,24 @@ export class ApplicationsService {
 
     if (!existingApplication) {
         throw new NotFoundException('Application not found');
+    }
+
+    const isStatusTransition =
+      dto.status !== undefined && dto.status !== existingApplication.status;
+
+    if (
+      isStatusTransition &&
+      TERMINAL_APPLICATION_STATUSES.has(existingApplication.status)
+    ) {
+      throw new BadRequestException(
+        'Applications with a terminal status cannot transition to another status',
+      );
+    }
+
+    if (isStatusTransition && dto.status === 'HIRED' && existingApplication.status !== 'OFFER') {
+      throw new BadRequestException(
+        'An application can only be marked as hired from an offer',
+      );
     }
 
     const salaryMin =
@@ -236,6 +259,12 @@ export class ApplicationsService {
   }
 
   async create(userId: string, dto: CreateApplicationDto) {
+    if (dto.status === 'HIRED') {
+      throw new BadRequestException(
+        'An application can only be marked as hired from an offer',
+      );
+    }
+
     if (
       dto.salaryMin !== undefined &&
       dto.salaryMax !== undefined &&

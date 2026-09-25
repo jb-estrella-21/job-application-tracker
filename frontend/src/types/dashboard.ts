@@ -11,6 +11,9 @@ export type RecentApplication = {
 
 export type DashboardSummary = {
   totalApplications: number;
+  activeApplications: number;
+  interviews: number;
+  offers: number;
   byStatus: Record<ApplicationStatus, number>;
   recentApplications: RecentApplication[];
 };

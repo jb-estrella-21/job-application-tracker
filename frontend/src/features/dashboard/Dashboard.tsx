@@ -45,6 +45,13 @@ export function Dashboard() {
     return <div className="state-card state-error" role="alert">{error}</div>;
   }
 
+  const highestStatusCount = Math.max(
+    ...APPLICATION_STATUSES.map(
+      (status) => summary?.byStatus[status] ?? 0,
+    ),
+    1,
+  );
+
   return (
     <main className="page">
       <header className="page-header">
@@ -58,23 +65,50 @@ export function Dashboard() {
         </Link>
       </header>
 
-      <section className="metric-card" aria-label="Total applications">
-        <span>Total applications</span>
-        <strong>{summary?.totalApplications ?? 0}</strong>
-        <p>All opportunities in your pipeline</p>
+      <section className="dashboard-metrics" aria-label="Application summary">
+        <article className="metric-card">
+          <span>Total applications</span>
+          <strong>{summary?.totalApplications ?? 0}</strong>
+          <p>All opportunities in your pipeline</p>
+        </article>
+        <article className="metric-card">
+          <span>Active applications</span>
+          <strong>{summary?.activeApplications ?? 0}</strong>
+          <p>Excludes hired, rejected, and withdrawn</p>
+        </article>
+        <article className="metric-card">
+          <span>Interviews</span>
+          <strong>{summary?.interviews ?? 0}</strong>
+          <p>Currently in interview</p>
+        </article>
+        <article className="metric-card">
+          <span>Offers</span>
+          <strong>{summary?.offers ?? 0}</strong>
+          <p>Current offer status</p>
+        </article>
       </section>
 
       <section className="section-block">
         <div className="section-heading">
           <div><h2>Pipeline</h2><p>Applications grouped by current status</p></div>
         </div>
-        <div className="status-grid">
+        <div className="pipeline-list">
           {APPLICATION_STATUSES.map((status) => (
-            <article className="status-card" key={status}>
+            <div className="pipeline-row" key={status}>
               <StatusBadge status={status} />
+              <div
+                className="pipeline-track"
+                aria-label={`${getStatusLabel(status)}: ${summary?.byStatus[status] ?? 0}`}
+              >
+                <span
+                  className={`pipeline-bar pipeline-${status.toLowerCase()}`}
+                  style={{
+                    width: `${((summary?.byStatus[status] ?? 0) / highestStatusCount) * 100}%`,
+                  }}
+                />
+              </div>
               <strong>{summary?.byStatus[status] ?? 0}</strong>
-              <span>{getStatusLabel(status)} applications</span>
-            </article>
+            </div>
           ))}
         </div>
       </section>

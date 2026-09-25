@@ -6,6 +6,7 @@ import {
   updateApplication,
 } from '../features/applications/api';
 import { ApplicationFields } from '../features/applications/ApplicationFields';
+import { TerminalStatusDialog } from '../components/TerminalStatusDialog';
 import {
   applicationToFormState,
   EMPTY_APPLICATION_FORM,
@@ -14,16 +15,25 @@ import {
 import type {
   ApplicationFormChangeHandler,
 } from '../features/applications/form';
+import type { ApplicationStatus } from '../types/application';
+import {
+  getAvailableStatusOptions,
+  isTerminalStatus,
+} from '../features/applications/status';
 
 export function EditApplicationPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { accessToken } = useAuth();
   const [form, setForm] = useState(EMPTY_APPLICATION_FORM);
+  const [originalStatus, setOriginalStatus] =
+    useState<ApplicationStatus | null>(null);
   const [hasApplication, setHasApplication] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [pendingTerminalStatus, setPendingTerminalStatus] =
+    useState<Extract<ApplicationStatus, 'HIRED' | 'REJECTED' | 'WITHDRAWN'> | null>(null);
 
   const handleFieldChange: ApplicationFormChangeHandler = (
     field,
@@ -48,6 +58,7 @@ export function EditApplicationPage() {
         const data = await getApplication(token, ID);
 
         setForm(applicationToFormState(data));
+        setOriginalStatus(data.status);
         setHasApplication(true);
       } catch {
         setError('Unable to load application.');
@@ -59,11 +70,7 @@ export function EditApplicationPage() {
     void loadApplication();
   }, [accessToken, id]);
 
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>,
-  ) {
-    event.preventDefault();
-
+  async function submitApplication() {
     if (!accessToken || !id) {
       return;
     }
@@ -78,11 +85,36 @@ export function EditApplicationPage() {
         formStateToUpdateInput(form),
       );
 
+      setPendingTerminalStatus(null);
       navigate(`/applications/${id}`);
     } catch {
       setError('Unable to update application.');
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (
+      originalStatus &&
+      form.status !== originalStatus &&
+      isTerminalStatus(form.status)
+    ) {
+      setError('');
+      setPendingTerminalStatus(form.status);
+      return;
+    }
+
+    void submitApplication();
+  }
+
+  function handleCancelTerminalStatus() {
+    setPendingTerminalStatus(null);
+    setError('');
+    if (originalStatus) {
+      setForm((current) => ({ ...current, status: originalStatus }));
     }
   }
 
@@ -102,6 +134,10 @@ export function EditApplicationPage() {
         <ApplicationFields
           form={form}
           onChange={handleFieldChange}
+          statusOptions={getAvailableStatusOptions(originalStatus ?? undefined)}
+          isStatusDisabled={
+            originalStatus !== null && isTerminalStatus(originalStatus)
+          }
         />
 
         {error && <p className="alert alert-error" role="alert">{error}</p>}
@@ -121,6 +157,15 @@ export function EditApplicationPage() {
         </button>
         </div>
       </form>
+      {pendingTerminalStatus && (
+        <TerminalStatusDialog
+          status={pendingTerminalStatus}
+          isSubmitting={isSubmitting}
+          error={error}
+          onCancel={handleCancelTerminalStatus}
+          onConfirm={() => void submitApplication()}
+        />
+      )}
     </main>
   );
 }

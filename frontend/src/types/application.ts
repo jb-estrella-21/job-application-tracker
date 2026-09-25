@@ -115,6 +115,7 @@ export const APPLICATION_STATUSES = [
   'ASSESSMENT',
   'INTERVIEW',
   'OFFER',
+  'HIRED',
   'REJECTED',
   'WITHDRAWN',
 ] as const;

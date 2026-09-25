@@ -7,14 +7,8 @@ export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getSummary(userId: string) {
-    const [totalApplications, statusGroups, recentApplications] =
+    const [statusGroups, recentApplications] =
       await this.prisma.$transaction([
-        this.prisma.jobApplication.count({
-          where: {
-            userId,
-          },
-        }),
-
         this.prisma.jobApplication.groupBy({
           by: ['status'],
           where: {
@@ -50,16 +44,45 @@ export class DashboardService {
       ASSESSMENT: 0,
       INTERVIEW: 0,
       OFFER: 0,
+      HIRED: 0,
       REJECTED: 0,
       WITHDRAWN: 0,
     };
 
+    let totalApplications = 0;
+    let activeApplications = 0;
+    let interviews = 0;
+    let offers = 0;
+
     for (const group of statusGroups) {
-      byStatus[group.status] = group._count.status;
+      const count = group._count.status;
+
+      byStatus[group.status] = count;
+      totalApplications += count;
+
+      // Terminal applications are no longer active in the pipeline.
+      if (
+        group.status !== 'REJECTED' &&
+        group.status !== 'WITHDRAWN' &&
+        group.status !== 'HIRED'
+      ) {
+        activeApplications += count;
+      }
+
+      if (group.status === 'INTERVIEW') {
+        interviews = count;
+      }
+
+      if (group.status === 'OFFER') {
+        offers = count;
+      }
     }
 
     return {
       totalApplications,
+      activeApplications,
+      interviews,
+      offers,
       byStatus,
       recentApplications,
     };
