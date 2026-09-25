@@ -2,9 +2,17 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
 export function ProtectedRoute() {
-  const { isAuthenticated } = useAuth();
+  const { status } = useAuth();
 
-  if (!isAuthenticated) {
+  if (status === 'checking') {
+    return (
+      <main className="state-card" aria-live="polite">
+        Checking your session…
+      </main>
+    );
+  }
+
+  if (status === 'unauthenticated') {
     return <Navigate to="/login" replace />;
   }
 
