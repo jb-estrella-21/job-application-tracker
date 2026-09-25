@@ -134,7 +134,7 @@ npm run dev
 
 Open `http://localhost:5173`. The API runs at `http://localhost:3000/api`.
 
-The backend currently allows browser requests from `http://localhost:5173`. Update the CORS origin in `backend/src/main.ts` when using a different frontend origin.
+The backend reads its browser-origin allowlist from `CORS_ORIGINS`. Local development uses `http://localhost:5173`; production browser origins must use HTTPS.
 
 ## Create the first user
 
@@ -200,6 +200,28 @@ All routes use the `/api` prefix.
 Supported list query parameters include `page`, `limit`, `search`, `status`, `sort`, and `order`.
 
 ## Useful commands
+
+## HTTP security and deployment notes
+
+- Login, registration, and refresh use process-local, in-memory IP throttles. A backend restart clears their counters, and horizontally scaled deployments need shared limiter storage.
+- Production deployment topology is not yet defined. Before placing the backend behind a reverse proxy or load balancer, configure trusted client-IP handling for that exact topology; do not blindly trust forwarded headers.
+- The API intentionally does not provide a frontend Content Security Policy. A meaningful CSP belongs where the production React HTML document is served.
+- HSTS is intentionally deferred until the HTTPS/TLS termination boundary is known. Do not enable preload or `includeSubDomains` without a separate deployment review.
+
+## Security regression tests
+
+The regular backend suite is safe to run without a database because it uses unit and programmatic HTTP tests with mocked persistence:
+
+```bash
+cd backend
+npm test
+```
+
+`npm run test:e2e` is reserved for future database-backed tests. It fails closed unless `NODE_ENV=test`, `DATABASE_URL`, and `TEST_DATABASE_URL` are explicitly supplied, both URLs match, and the database name clearly identifies a test database. Never point either variable at a development or production database.
+
+The frontend has no test runner yet. Its session lifecycle remains manually verified: startup refresh followed by `/auth/me`, protected-route checking, memory-only access tokens, one shared 401 refresh/retry, logout cleanup, stale-refresh suppression, and non-401/403 non-refresh behavior. A future focused setup can use Vitest, jsdom, and React Testing Library after separate approval.
+
+No CI workflow is configured. A future CI workflow should run Prisma validation, backend build/lint/test, and frontend build/lint; database-backed tests should run only with an isolated provisioned test database.
 
 ### Backend
 
