@@ -5,6 +5,8 @@ import { UsersModule } from '../users/users.module.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { JwtStrategy } from './strategies/jwt.strategy.js';
+import { getJwtPolicy } from '../config/auth.config.js';
+import { RefreshSessionService } from './refresh-session.service.js';
 
 @Module({
   imports: [
@@ -12,15 +14,22 @@ import { JwtStrategy } from './strategies/jwt.strategy.js';
     ConfigModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.getOrThrow<string>('JWT_SECRET'),
+      useFactory: (configService: ConfigService) => {
+        const jwtPolicy = getJwtPolicy(configService);
+
+        return {
+          secret: jwtPolicy.secret,
         signOptions: {
-          expiresIn: '15m',
+            algorithm: jwtPolicy.algorithm,
+            issuer: jwtPolicy.issuer,
+            audience: jwtPolicy.audience,
+            expiresIn: jwtPolicy.accessTokenExpiresIn,
         },
-      }),
+        };
+      },
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, RefreshSessionService],
 })
 export class AuthModule {}

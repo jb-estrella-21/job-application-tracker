@@ -1,6 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 
+const PUBLIC_USER_SELECT = {
+  id: true,
+  email: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
+
+const AUTHENTICATION_USER_SELECT = {
+  id: true,
+  email: true,
+  passwordHash: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
+
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
@@ -8,18 +23,21 @@ export class UsersService {
   async findById(id: string) {
     return this.prisma.user.findUnique({
         where: { id },
-        select: {
-        id: true,
-        email: true,
-        createdAt: true,
-        updatedAt: true,
-        },
+        select: PUBLIC_USER_SELECT,
     });
     }
   
   async findByEmail(email: string) {
     return this.prisma.user.findUnique({
       where: { email },
+      select: PUBLIC_USER_SELECT,
+    });
+  }
+
+  async findForAuthenticationByEmail(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email },
+      select: AUTHENTICATION_USER_SELECT,
     });
   }
 
@@ -29,12 +47,7 @@ export class UsersService {
         email,
         passwordHash,
       },
-      select: {
-        id: true,
-        email: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: PUBLIC_USER_SELECT,
     });
   }
 }
