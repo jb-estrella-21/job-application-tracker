@@ -8,7 +8,7 @@
     "node": ">=22.22.2 <23"
   },
   "license": "UNLICENSED",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
     "build": "prisma generate && nest build",
     "deploy": "nest deploy",
