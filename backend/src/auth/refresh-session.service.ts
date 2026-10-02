@@ -108,7 +108,7 @@ export class RefreshSessionService {
     return {
       httpOnly: true,
       secure: policy.cookieSecure,
-      sameSite: 'lax' as const,
+      sameSite: 'none' as const,
       path: REFRESH_COOKIE_PATH,
       maxAge: policy.expiresInMs,
     };

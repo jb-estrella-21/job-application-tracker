@@ -116,7 +116,7 @@ describe('RefreshSessionService', () => {
     expect(service.getCookieOptions()).toMatchObject({
       httpOnly: true,
       secure: false,
-      sameSite: 'lax',
+      sameSite: 'none',
       path: REFRESH_COOKIE_PATH,
     });
     expect(getRefreshCookieValue(`${REFRESH_COOKIE_NAME}=value; other=1`)).toBe('value');
