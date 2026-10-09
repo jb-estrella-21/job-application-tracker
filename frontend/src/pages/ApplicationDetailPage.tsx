@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Link,
   useNavigate,
@@ -48,6 +48,12 @@ export function ApplicationDetailPage() {
   const [pendingEmploymentStatus, setPendingEmploymentStatus] = useState<Exclude<EmploymentStatus, 'ACTIVE'> | null>(null);
   const [isUpdatingEmployment, setIsUpdatingEmployment] = useState(false);
   const [employmentError, setEmploymentError] = useState('');
+  const employmentStatusReturnFocusRef = useRef<HTMLElement | null>(null);
+  const employmentHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const getEmploymentStatusReturnFocus = useCallback(
+    () => employmentStatusReturnFocusRef.current,
+    [],
+  );
 
   useEffect(() => {
     if (!accessToken || !id) {
@@ -170,6 +176,7 @@ export function ApplicationDetailPage() {
     setEmploymentError(''); setIsUpdatingEmployment(true);
     try {
       const updated = await updateEmploymentStatus(accessToken, id, pendingEmploymentStatus);
+      employmentStatusReturnFocusRef.current = employmentHeadingRef.current;
       setApplication(updated); setPendingEmploymentStatus(null);
     } catch { setEmploymentError('Unable to update employment status.'); }
     finally { setIsUpdatingEmployment(false); }
@@ -244,7 +251,7 @@ export function ApplicationDetailPage() {
 
       <section className="card detail-section"><h2>Recruiter</h2><div className="detail-grid"><div><span>Name</span><strong>{application.recruiterName ?? '—'}</strong></div><div><span>Email</span><strong>{application.recruiterEmail ? <a href={`mailto:${application.recruiterEmail}`}>{application.recruiterEmail}</a> : '—'}</strong></div><div><span>Phone</span><strong>{application.recruiterPhone ? <a href={`tel:${application.recruiterPhone}`}>{application.recruiterPhone}</a> : '—'}</strong></div></div></section>
 
-      {application.status === 'HIRED' && application.employmentStatus && <section className="card detail-section"><h2>Employment</h2><div className="detail-grid"><div><span>Employment status</span><strong>{application.employmentStatus === 'ACTIVE' ? 'Active' : application.employmentStatus === 'LEFT' ? 'Left' : 'Terminated'}</strong></div>{application.employmentEndedAt && <div><span>Employment ended</span><strong>{new Date(application.employmentEndedAt).toLocaleDateString()}</strong></div>}</div>{application.employmentStatus === 'ACTIVE' && <div className="form-actions"><button className="button button-warning" type="button" onClick={() => setPendingEmploymentStatus('LEFT')}>I left this job</button><button className="button button-danger" type="button" onClick={() => setPendingEmploymentStatus('TERMINATED')}>Employment terminated</button></div>}</section>}
+      {application.status === 'HIRED' && application.employmentStatus && <section className="card detail-section"><h2 ref={employmentHeadingRef} tabIndex={-1}>Employment</h2><div className="detail-grid"><div><span>Employment status</span><strong>{application.employmentStatus === 'ACTIVE' ? 'Active' : application.employmentStatus === 'LEFT' ? 'Left' : 'Terminated'}</strong></div>{application.employmentEndedAt && <div><span>Employment ended</span><strong>{new Date(application.employmentEndedAt).toLocaleDateString()}</strong></div>}</div>{application.employmentStatus === 'ACTIVE' && <div className="form-actions"><button className="button button-warning" type="button" onClick={(event) => { employmentStatusReturnFocusRef.current = event.currentTarget; setPendingEmploymentStatus('LEFT'); }}>I left this job</button><button className="button button-danger" type="button" onClick={(event) => { employmentStatusReturnFocusRef.current = event.currentTarget; setPendingEmploymentStatus('TERMINATED'); }}>Employment terminated</button></div>}</section>}
 
       <section className="card detail-section"><h2>Notes</h2><p className="notes-content">{application.notes ?? 'No notes added.'}</p></section>
 
@@ -272,7 +279,7 @@ export function ApplicationDetailPage() {
           onConfirm={() => void updateStatus(pendingTerminalStatus, true)}
         />
       )}
-      {pendingEmploymentStatus && <EmploymentStatusDialog status={pendingEmploymentStatus} isSubmitting={isUpdatingEmployment} error={employmentError} onCancel={() => { setPendingEmploymentStatus(null); setEmploymentError(''); }} onConfirm={() => void confirmEmploymentStatus()} />}
+      {pendingEmploymentStatus && <EmploymentStatusDialog status={pendingEmploymentStatus} isSubmitting={isUpdatingEmployment} error={employmentError} getRestoreFocusTarget={getEmploymentStatusReturnFocus} onCancel={() => { setPendingEmploymentStatus(null); setEmploymentError(''); }} onConfirm={() => void confirmEmploymentStatus()} />}
     </main>
   );
 }
