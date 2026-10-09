@@ -19,10 +19,9 @@ export function AppLayout() {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
-          <span className="brand-mark" aria-hidden="true">JT</span>
-          <div>
-            <strong>Job Tracker</strong>
-            <span>Application workspace</span>
+          <img className="brand-mark" src="/brand/h3a-symbol-reversed.svg" alt="" aria-hidden="true" />
+          <div className="brand-copy">
+            <strong>Track Thy Path</strong>
           </div>
         </div>
 

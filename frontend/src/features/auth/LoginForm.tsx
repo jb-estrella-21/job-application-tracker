@@ -47,8 +47,8 @@ export function LoginForm({
   return (
     <form onSubmit={handleSubmit} className="auth-card">
       <div className="auth-brand">
-        <span className="brand-mark" aria-hidden="true">JT</span>
-        <span>Job Tracker</span>
+        <img className="brand-mark" src="/brand/h3a-symbol-evergreen.svg" alt="" aria-hidden="true" />
+        <span>Track Thy Path</span>
       </div>
       <div className="auth-heading">
         <h1>Welcome back</h1>

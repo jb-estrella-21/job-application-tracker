@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">H3-A Softer Route symbol, reversed</title>
+  <desc id="desc">Production candidate derived from the supplied raster reference; a flowing route and separate destination dot.</desc>
+  <path fill="#FFFFFF" d="M367 158C325 164 264 181 234 200C216 211 216 225 230 238C248 254 285 267 321 282C342 291 354 299 350 307C343 320 311 330 279 339C224 355 159 371 112 391C83 403 68 417 67 435H171C184 416 229 401 280 386C333 371 384 353 400 333C420 308 388 290 352 274C314 257 276 244 248 230C226 218 226 207 245 196C277 178 337 166 373 171C380 168 377 158 367 158Z"/>
+  <circle cx="412" cy="114" r="35" fill="#FFFFFF"/>
+</svg>
