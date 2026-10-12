@@ -42,11 +42,6 @@ function App() {
           />
 
           <Route
-            path="/applications/new"
-            element={<NewApplicationPage />}
-          />
-
-          <Route
             path="/applications/:id"
             element={<ApplicationDetailPage />}
           />
@@ -56,6 +51,11 @@ function App() {
             element={<EditApplicationPage />}
           />
         </Route>
+
+        <Route
+          path="/applications/new"
+          element={<NewApplicationPage />}
+        />
       </Route>
 
       <Route

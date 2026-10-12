@@ -8,6 +8,16 @@ import {
 
 import { useAuth } from '../features/auth/AuthContext';
 
+const SIDEBAR_COLLAPSED_KEY = 'job-app-tracker.sidebar-collapsed';
+
+function readSidebarCollapsedPreference() {
+  try {
+    return window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
 function getAvatarInitials(email: string | undefined) {
   if (!email) {
     return 'U';
@@ -27,11 +37,27 @@ export function AppLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isMobileNavigationOpen, setIsMobileNavigationOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
+    readSidebarCollapsedPreference,
+  );
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const mobileNavigationButtonRef = useRef<HTMLButtonElement>(null);
   const accountMenuRef = useRef<HTMLDivElement>(null);
   const accountButtonRef = useRef<HTMLButtonElement>(null);
   const accountIdentity = user?.email ?? 'Account';
+
+  useEffect(() => {
+    function handleSidebarStorage(event: StorageEvent) {
+      if (event.key === SIDEBAR_COLLAPSED_KEY || event.key === null) {
+        setIsSidebarCollapsed(
+          event.key === null ? false : event.newValue === 'true',
+        );
+      }
+    }
+
+    window.addEventListener('storage', handleSidebarStorage);
+    return () => window.removeEventListener('storage', handleSidebarStorage);
+  }, []);
 
   useEffect(() => {
     if (!isAccountMenuOpen) {
@@ -92,9 +118,27 @@ export function AppLayout() {
     mobileNavigationButtonRef.current?.focus();
   }
 
+  function toggleSidebar() {
+    const nextCollapsed = !isSidebarCollapsed;
+    setIsSidebarCollapsed(nextCollapsed);
+
+    try {
+      window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(nextCollapsed));
+    } catch {
+      // Keep the control usable if browser storage is unavailable.
+    }
+  }
+
+  const shellClassName = `app-shell${isSidebarCollapsed ? ' sidebar-is-collapsed' : ''}`;
+  const sidebarClassName = [
+    'sidebar',
+    isMobileNavigationOpen && 'sidebar-open',
+    isSidebarCollapsed && 'sidebar-collapsed',
+  ].filter(Boolean).join(' ');
+
   return (
-    <div className="app-shell">
-      <aside className={`sidebar${isMobileNavigationOpen ? ' sidebar-open' : ''}`}>
+    <div className={shellClassName}>
+      <aside className={sidebarClassName}>
         <div className="brand">
           <img
             className="brand-mark"
@@ -108,17 +152,37 @@ export function AppLayout() {
         </div>
 
         <nav className="sidebar-nav" id="primary-navigation" aria-label="Primary navigation">
-          <NavLink to="/dashboard" onClick={closeMobileNavigation}>
-            Dashboard
+          <NavLink to="/dashboard" onClick={closeMobileNavigation} title={isSidebarCollapsed ? 'Dashboard' : undefined}>
+            <svg className="sidebar-nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3.5" y="3.5" width="7" height="7" rx="1.5" />
+              <rect x="13.5" y="3.5" width="7" height="7" rx="1.5" />
+              <rect x="3.5" y="13.5" width="7" height="7" rx="1.5" />
+              <rect x="13.5" y="13.5" width="7" height="7" rx="1.5" />
+            </svg>
+            <span className="sidebar-nav-label">Dashboard</span>
           </NavLink>
-          <NavLink to="/applications" onClick={closeMobileNavigation}>
-            Applications
+          <NavLink to="/applications" onClick={closeMobileNavigation} title={isSidebarCollapsed ? 'Applications' : undefined}>
+            <svg className="sidebar-nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="4" y="5" width="16" height="15" rx="2" />
+              <path d="M9 5V3.5h6V5M8 10h8M8 14h8" />
+            </svg>
+            <span className="sidebar-nav-label">Applications</span>
           </NavLink>
-          <NavLink to="/calendar" onClick={closeMobileNavigation}>
-            Calendar
+          <NavLink to="/calendar" onClick={closeMobileNavigation} title={isSidebarCollapsed ? 'Calendar' : undefined}>
+            <svg className="sidebar-nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3.5" y="5" width="17" height="16" rx="2" />
+              <path d="M7.5 3.5v3M16.5 3.5v3M3.5 9h17M8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01" />
+            </svg>
+            <span className="sidebar-nav-label">Calendar</span>
           </NavLink>
-          <NavLink to="/settings" onClick={closeMobileNavigation}>
-            Settings
+          <NavLink to="/settings" onClick={closeMobileNavigation} title={isSidebarCollapsed ? 'Settings' : undefined}>
+            <svg className="sidebar-nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 6h5m4 0h7M4 12h9m4 0h3M4 18h2m4 0h10" />
+              <circle cx="11" cy="6" r="2" />
+              <circle cx="15" cy="12" r="2" />
+              <circle cx="8" cy="18" r="2" />
+            </svg>
+            <span className="sidebar-nav-label">Settings</span>
           </NavLink>
         </nav>
 
@@ -126,12 +190,36 @@ export function AppLayout() {
           className="sidebar-add-action"
           to="/applications/new"
           onClick={closeMobileNavigation}
+          title={isSidebarCollapsed ? 'Add Application' : undefined}
         >
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M12 5v14M5 12h14" />
           </svg>
-          <span>Add Application</span>
+          <span className="sidebar-add-label">Add Application</span>
         </Link>
+
+        <div className="sidebar-footer">
+          <button
+            className="sidebar-collapse-toggle"
+            type="button"
+            aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-controls="primary-navigation"
+            aria-expanded={!isSidebarCollapsed}
+            title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            onClick={toggleSidebar}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              {isSidebarCollapsed ? (
+                <path d="m9 18 6-6-6-6" />
+              ) : (
+                <path d="m15 18-6-6 6-6" />
+              )}
+            </svg>
+            <span className="sidebar-collapse-label">
+              {isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            </span>
+          </button>
+        </div>
       </aside>
 
       <header className="app-header">

@@ -12,7 +12,7 @@ const { logout, useAuth } = vi.hoisted(() => ({
 vi.mock('../features/auth/AuthContext', () => ({ useAuth }));
 
 function renderLayout(initialPath = '/applications') {
-  render(
+  return render(
     <MemoryRouter initialEntries={[initialPath]}>
       <Routes>
         <Route element={<AppLayout />}>
@@ -30,6 +30,7 @@ function renderLayout(initialPath = '/applications') {
 
 describe('AppLayout', () => {
   beforeEach(() => {
+    window.localStorage.clear();
     logout.mockReset();
     logout.mockResolvedValue(undefined);
     useAuth.mockReturnValue({
@@ -60,6 +61,61 @@ describe('AppLayout', () => {
 
     expect(screen.getByText('Settings page')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Settings' })).toHaveClass('active');
+  });
+
+  it('collapses the desktop sidebar, preserves navigation labels, and remembers the preference', async () => {
+    const user = userEvent.setup();
+    const { unmount } = renderLayout();
+
+    await user.click(screen.getByRole('button', { name: 'Collapse sidebar' }));
+
+    const expandButton = screen.getByRole('button', { name: 'Expand sidebar' });
+    expect(expandButton.parentElement).toHaveClass('sidebar-footer');
+    expect(expandButton).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+    expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute(
+      'title',
+      'Dashboard',
+    );
+    expect(screen.getByRole('link', { name: 'Applications' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Calendar' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Settings' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Add Application' })).toHaveAttribute(
+      'title',
+      'Add Application',
+    );
+    expect(window.localStorage.getItem('job-app-tracker.sidebar-collapsed')).toBe('true');
+
+    await user.click(screen.getByRole('link', { name: 'Dashboard' }));
+    expect(await screen.findByText('Dashboard page')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Expand sidebar' })).toBeInTheDocument();
+
+    unmount();
+    renderLayout('/dashboard');
+    expect(screen.getByRole('button', { name: 'Expand sidebar' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+  });
+
+  it('keeps the desktop collapse state separate from the mobile navigation drawer', async () => {
+    const user = userEvent.setup();
+    renderLayout();
+
+    await user.click(screen.getByRole('button', { name: 'Collapse sidebar' }));
+    await user.click(screen.getByRole('button', { name: 'Open navigation' }));
+
+    expect(screen.getByRole('button', { name: 'Expand sidebar' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+    expect(screen.getByRole('button', { name: 'Close navigation' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    expect(screen.getByRole('link', { name: 'Applications' })).toBeInTheDocument();
   });
 
   it('opens and closes the mobile navigation with keyboard support', async () => {
