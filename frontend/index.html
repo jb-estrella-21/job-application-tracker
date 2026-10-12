@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="any" />
@@ -12,6 +12,22 @@
     <meta name="theme-color" content="#20544B" />
     <meta name="description" content="A job application tracker for organizing applications and their progress." />
     <title>Track Thy Path</title>
+    <script>
+      (() => {
+        const key = 'job-app-tracker.theme';
+        let preference = 'system';
+
+        try {
+          const saved = window.localStorage.getItem(key);
+          preference = saved === 'light' || saved === 'dark' ? saved : 'system';
+        } catch { /* Use the system preference if local storage is unavailable. */ }
+
+        const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
+        document.documentElement.dataset.theme = preference === 'system'
+          ? (prefersDark ? 'dark' : 'light')
+          : preference;
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -3,20 +3,22 @@ import { Link } from 'react-router-dom';
 import { StatusBadge } from '../../components/StatusBadge';
 import { APPLICATION_STATUSES } from '../../types/application';
 import { useAuth } from '../auth/AuthContext';
+import { useSettings, type ApplicationSort } from '../settings/SettingsContext';
 import { getApplications } from './api';
 import { getStatusLabel } from './status';
 import type { ApplicationStatus, ApplicationsQuery, JobApplication } from '../../types/application';
 
 export function ApplicationsList() {
   const { accessToken } = useAuth();
+  const { applicationSort, applicationSortOrder } = useSettings();
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [status, setStatus] = useState('');
-  const [sort, setSort] = useState('updatedAt');
-  const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+  const [sort, setSort] = useState(applicationSort);
+  const [order, setOrder] = useState<'asc' | 'desc'>(applicationSortOrder);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
@@ -55,7 +57,7 @@ export function ApplicationsList() {
       <div className="filters" aria-label="Application filters">
         <div className="field field-search"><label htmlFor="application-search">Search</label><input id="application-search" type="search" placeholder="Search company or position..." value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} /></div>
         <div className="field"><label htmlFor="status-filter">Status</label><select id="status-filter" value={status} onChange={(event) => { setStatus(event.target.value); setPage(1); }}><option value="">All statuses</option>{APPLICATION_STATUSES.map((option) => <option key={option} value={option}>{getStatusLabel(option)}</option>)}</select></div>
-        <div className="field"><label htmlFor="sort">Sort by</label><select id="sort" value={sort} onChange={(event) => { setSort(event.target.value); setPage(1); }}><option value="updatedAt">Last updated</option><option value="createdAt">Created</option><option value="applicationDate">Application date</option><option value="companyName">Company</option><option value="positionTitle">Position</option></select></div>
+        <div className="field"><label htmlFor="sort">Sort by</label><select id="sort" value={sort} onChange={(event) => { setSort(event.target.value as ApplicationSort); setPage(1); }}><option value="updatedAt">Last updated</option><option value="createdAt">Created</option><option value="applicationDate">Application date</option><option value="companyName">Company</option><option value="positionTitle">Position</option></select></div>
         <div className="field"><label htmlFor="sort-order">Order</label><select id="sort-order" value={order} onChange={(event) => { setOrder(event.target.value as 'asc' | 'desc'); setPage(1); }}><option value="desc">Descending</option><option value="asc">Ascending</option></select></div>
       </div>
       {applications.length === 0 ? (
