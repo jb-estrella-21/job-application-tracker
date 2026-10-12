@@ -4,7 +4,7 @@ export function ApplicationsPage() {
   return (
     <main className="page">
       <header className="page-header">
-        <div><p className="eyebrow">Pipeline</p><h1>Applications</h1><p>Search, filter, and manage every opportunity.</p></div>
+        <div><h1>Applications</h1></div>
       </header>
 
       <ApplicationsList />

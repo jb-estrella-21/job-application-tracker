@@ -145,9 +145,7 @@ export function Calendar() {
     <main className="page calendar-page">
       <header className="page-header calendar-page-header">
         <div>
-          <p className="eyebrow">Your timeline</p>
           <h1>Calendar</h1>
-          <p>Application dates from your saved applications.</p>
         </div>
         <div className="calendar-controls" aria-label="Calendar navigation">
           <button

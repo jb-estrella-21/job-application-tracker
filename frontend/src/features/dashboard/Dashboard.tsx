@@ -56,9 +56,7 @@ export function Dashboard() {
     <main className="page">
       <header className="page-header">
         <div>
-          <p className="eyebrow">Overview</p>
           <h1>Dashboard</h1>
-          <p>Track momentum across your job search.</p>
         </div>
       </header>
 
@@ -66,12 +64,12 @@ export function Dashboard() {
         <article className="metric-card">
           <span>Total applications</span>
           <strong>{summary?.totalApplications ?? 0}</strong>
-          <p>All opportunities in your pipeline</p>
+          <p>All opportunities</p>
         </article>
         <article className="metric-card">
           <span>Active applications</span>
           <strong>{summary?.activeApplications ?? 0}</strong>
-          <p>Excludes hired, rejected, and withdrawn</p>
+          <p>Active candidates only</p>
         </article>
         <article className="metric-card">
           <span>Interviews</span>
@@ -87,7 +85,6 @@ export function Dashboard() {
 
       <section className="section-block">
         <div className="section-heading">
-          <div><h2>Pipeline</h2><p>Applications grouped by current status</p></div>
         </div>
         <div className="pipeline-list">
           {APPLICATION_STATUSES.map((status) => (
