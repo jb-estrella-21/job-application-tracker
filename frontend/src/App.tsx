@@ -11,6 +11,8 @@ import { LoginPage } from './pages/LoginPage';
 import { NewApplicationPage } from './pages/NewApplicationPage';
 import { ApplicationDetailPage } from './pages/ApplicationDetailPage';
 import { EditApplicationPage } from './pages/EditApplicationPage';
+import { CalendarPage } from './pages/CalendarPage';
+import { SettingsPage } from './pages/SettingsPage';
 
 function App() {
   return (
@@ -27,6 +29,16 @@ function App() {
           <Route
             path="/applications"
             element={<ApplicationsPage />}
+          />
+
+          <Route
+            path="/calendar"
+            element={<CalendarPage />}
+          />
+
+          <Route
+            path="/settings"
+            element={<SettingsPage />}
           />
 
           <Route

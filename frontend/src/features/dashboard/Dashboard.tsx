@@ -60,9 +60,6 @@ export function Dashboard() {
           <h1>Dashboard</h1>
           <p>Track momentum across your job search.</p>
         </div>
-        <Link className="button button-primary" to="/applications/new">
-          Add application
-        </Link>
       </header>
 
       <section className="dashboard-metrics" aria-label="Application summary">
